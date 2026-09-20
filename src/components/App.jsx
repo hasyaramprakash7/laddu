@@ -6,7 +6,7 @@ import ladduImg from '../assets/laddu.png';     // Product Image
 const API_BASE = 'https://ganesh-ikqb.onrender.com';
 
 const ORG = {
-  name: 'Sri Krishna Sweets',
+  name: 'Gaddiannaram Utsav Samithi ',
   entityType: 'Food Retail / Sweets Shop',
   address: 'Gaddiannaram, Dilsukhnagar, Hyderabad, Telangana 500060, India',
   email: 'bluxury1000@gmail.com',
@@ -164,26 +164,13 @@ function ShopPage({
   return (
     <div style={styles.shopContainer}>
       <div style={styles.headerSection}>
-        <h1 style={styles.eventName}>🛒 {ORG.name} 🛒</h1>
+        <h1 style={styles.eventName}> {ORG.name} </h1>
         <p style={styles.eventLocation}>📍 Gaddiannaram, Dilsukhnagar, Hyderabad</p>
       </div>
 
       {!isPaid ? (
         <>
-          {/* PRODUCT DISPLAY SECTION (Laddu Image) */}
-          <div style={styles.productCard}>
-            <img src={ladduImg} alt={ORG.productName} style={styles.productImage} />
-            <h2 style={styles.productTitle}>{ORG.productName}</h2>
-            <p style={styles.productDesc}>{ORG.productDesc}</p>
-            <p style={styles.productPrice}>Price: ₹{ORG.productPrice}</p>
-            <div style={styles.productMeta}>
-              <span>✅ Freshly Prepared</span>
-              <span>✅ Pure Desi Ghee</span>
-              <span>✅ Counter Pickup</span>
-            </div>
-          </div>
-
-          {/* CHECKOUT FORM SECTION */}
+          {/* CHECKOUT FORM SECTION — NOW ON TOP */}
           <div style={styles.glassCard}>
             <h3 style={styles.formTitle}>Enter Details to Place Order</h3>
             <form onSubmit={handleSubmit}>
@@ -219,6 +206,19 @@ function ShopPage({
 
               <p style={styles.note}>🔒 Secure payment via Razorpay</p>
             </form>
+          </div>
+
+          {/* PRODUCT DISPLAY SECTION — NOW BELOW */}
+          <div style={styles.productCard}>
+            <img src={ladduImg} alt={ORG.productName} style={styles.productImage} />
+            <h2 style={styles.productTitle}>{ORG.productName}</h2>
+            <p style={styles.productDesc}>{ORG.productDesc}</p>
+            <p style={styles.productPrice}>Price: ₹{ORG.productPrice}</p>
+            <div style={styles.productMeta}>
+              <span>✅ Freshly Prepared</span>
+              <span>✅ Pure Desi Ghee</span>
+              <span>✅ Counter Pickup</span>
+            </div>
           </div>
         </>
       ) : (
@@ -602,7 +602,7 @@ const styles = {
     marginBottom: '20px',
   },
   eventName: {
-    margin: 0,
+    marginTop: 50,
     fontSize: '28px',
     fontWeight: 'bold',
     color: '#FFD700',
@@ -615,53 +615,6 @@ const styles = {
     color: '#ffe0b2',
     letterSpacing: '0.4px',
     textShadow: '0 2px 10px rgba(0,0,0,0.95)',
-  },
-  
-  // Product Card Styles
-  productCard: {
-    width: '100%',
-    maxWidth: '460px',
-    background: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: '16px',
-    padding: '20px',
-    marginBottom: '20px',
-    textAlign: 'center',
-    boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-    border: '2px solid #d4a017',
-  },
-  productImage: {
-    width: '100%',
-    maxHeight: '200px',
-    objectFit: 'cover',
-    borderRadius: '10px',
-    marginBottom: '16px',
-  },
-  productTitle: {
-    margin: '0 0 10px',
-    fontSize: '22px',
-    color: '#b71c1c',
-    fontWeight: 'bold',
-  },
-  productDesc: {
-    margin: '0 0 12px',
-    fontSize: '14px',
-    color: '#5d4037',
-    lineHeight: '1.5',
-  },
-  productPrice: {
-    margin: '0 0 12px',
-    fontSize: '24px',
-    color: '#e65100',
-    fontWeight: 'bold',
-  },
-  productMeta: {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '10px',
-    fontSize: '12px',
-    color: '#2e7d32',
-    fontWeight: '600',
-    flexWrap: 'wrap',
   },
 
   // Form Card Styles
@@ -727,6 +680,53 @@ const styles = {
     color: '#ffe0b2',
     textAlign: 'center',
     textShadow: '0 1px 5px rgba(0,0,0,0.8)',
+  },
+
+  // Product Card Styles
+  productCard: {
+    width: '100%',
+    maxWidth: '460px',
+    background: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: '16px',
+    padding: '20px',
+    marginBottom: '20px',
+    textAlign: 'center',
+    boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+    border: '2px solid #d4a017',
+  },
+  productImage: {
+    width: '100%',
+    maxHeight: '200px',
+    objectFit: 'cover',
+    borderRadius: '10px',
+    marginBottom: '16px',
+  },
+  productTitle: {
+    margin: '0 0 10px',
+    fontSize: '22px',
+    color: '#b71c1c',
+    fontWeight: 'bold',
+  },
+  productDesc: {
+    margin: '0 0 12px',
+    fontSize: '14px',
+    color: '#5d4037',
+    lineHeight: '1.5',
+  },
+  productPrice: {
+    margin: '0 0 12px',
+    fontSize: '24px',
+    color: '#e65100',
+    fontWeight: 'bold',
+  },
+  productMeta: {
+    display: 'flex',
+    justifyContent: 'center',
+    gap: '10px',
+    fontSize: '12px',
+    color: '#2e7d32',
+    fontWeight: '600',
+    flexWrap: 'wrap',
   },
 
   // Success Styles
