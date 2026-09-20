@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import shopImg from '../assets/laddu.png'; // Ensure this path is correct
+import ganeshImg from '../assets/ganesh.jpeg'; // Background Image
+import ladduImg from '../assets/laddu.png';     // Product Image
 
 const API_BASE = 'https://ganesh-ikqb.onrender.com';
 
@@ -115,8 +116,9 @@ export default function App() {
 
   return (
     <div style={styles.root}>
+      {/* Background Image Wrapper */}
       <div style={styles.bgImageWrapper}>
-        <img src={shopImg} alt="Laddu Shop" style={styles.bgImage} />
+        <img src={ganeshImg} alt="Background" style={styles.bgImage} />
         <div style={styles.bgOverlay} />
       </div>
 
@@ -168,9 +170,9 @@ function ShopPage({
 
       {!isPaid ? (
         <>
-          {/* PRODUCT DISPLAY SECTION */}
+          {/* PRODUCT DISPLAY SECTION (Laddu Image) */}
           <div style={styles.productCard}>
-            <img src={shopImg} alt={ORG.productName} style={styles.productImage} />
+            <img src={ladduImg} alt={ORG.productName} style={styles.productImage} />
             <h2 style={styles.productTitle}>{ORG.productName}</h2>
             <p style={styles.productDesc}>{ORG.productDesc}</p>
             <p style={styles.productPrice}>Price: ₹{ORG.productPrice}</p>
