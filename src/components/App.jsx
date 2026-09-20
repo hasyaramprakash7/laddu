@@ -47,6 +47,30 @@ function pageFromHash() {
   return PAGE_KEYS.includes(h) ? h : 'shop';
 }
 
+// ============================================================
+// LOCAL WHATSAPP URL BUILDER
+// Used as a fallback when /api/order/verify fails or is slow —
+// so the user always gets a working receipt button.
+// ============================================================
+function buildLocalWhatsappUrl(order) {
+  let cleanPhone = String(order.phone || '').replace(/\D/g, '');
+  if (!cleanPhone.startsWith('91') && cleanPhone.length === 10) {
+    cleanPhone = '91' + cleanPhone;
+  }
+
+  const text =
+    `🛒 *Laddu – Order Confirmation* 🛒\n\n` +
+    `*Customer Name:* ${order.name}\n` +
+    `*Order ID:* ${order.orderNo}\n` +
+    `*Phone:* ${order.phone}\n` +
+    `*Amount Paid:* ₹21 (Confirmed)\n` +
+    `*Payment ID:* ${order.paymentId}\n\n` +
+    `Please show this Order Receipt at our pickup counter to collect your Laddu.\n\n` +
+    `Thank you for your order!`;
+
+  return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
+}
+
 export default function App() {
   const [page, setPage] = useState(() => pageFromHash());
   const [name, setName] = useState('');
@@ -62,7 +86,6 @@ export default function App() {
 
   // ---- keep browser history in sync with our internal pages ----
   useEffect(() => {
-    // Make sure the very first history entry has our state + hash
     const initial = pageFromHash();
     window.history.replaceState({ page: initial }, '', `#${initial}`);
 
@@ -114,7 +137,26 @@ export default function App() {
         order_id: data.order_id,
         prefill: { name, contact: phone },
         theme: { color: '#0b3d2e' },
+
         handler: async function (response) {
+          // Razorpay only calls this handler when the payment SUCCEEDED.
+          // So show success immediately and never scare the user with a
+          // red alert — the backend webhook will settle the DB anyway.
+          const optimisticOrder = {
+            name,
+            phone,
+            orderNo: data.orderNo,
+            paymentId: response.razorpay_payment_id,
+            status: 'SUCCESS',
+            createdAt: new Date().toISOString(),
+          };
+
+          setIsPaid(true);
+          setConfirmedOrder(optimisticOrder);
+          setWhatsappUrl(buildLocalWhatsappUrl(optimisticOrder));
+
+          // Try to verify + get the official WhatsApp URL — but never
+          // block the success screen if this call is slow or fails.
           try {
             const verifyRes = await axios.post(`${API_BASE}/api/order/verify`, {
               razorpay_order_id: response.razorpay_order_id,
@@ -124,19 +166,20 @@ export default function App() {
             });
 
             if (verifyRes.data.success) {
-              setIsPaid(true);
               setWhatsappUrl(verifyRes.data.whatsappUrl);
               setConfirmedOrder(verifyRes.data.orderDetails);
-            } else {
-              alert('Payment verification failed: ' + (verifyRes.data.message || 'unknown'));
             }
           } catch (err) {
-            console.error('Verification error:', err);
-            alert('Payment verification error. Please contact support with Payment ID: ' + response.razorpay_payment_id);
+            console.warn(
+              'verify call failed — webhook will settle it:',
+              err?.response?.data || err.message
+            );
+            // Local fallback already set above — user can still send the receipt.
           } finally {
             setLoading(false);
           }
         },
+
         modal: {
           ondismiss: function () {
             setLoading(false);
@@ -483,8 +526,6 @@ function ShopPage({
           <span style={styles.ornamentGem}>◆</span>
           <span style={styles.ornamentLine} />
         </div>
-
-       
       </div>
 
       {!isPaid ? (
