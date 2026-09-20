@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import shopImg from '../assets/ganesh.jpeg'; // rename this file to laddu.jpeg if you want
+import shopImg from '../assets/ganesh.jpeg'; // Ensure this path is correct
 
 const API_BASE = 'https://ganesh-ikqb.onrender.com';
 
 const ORG = {
-  name: 'Laddu Shop',
+  name: 'Sri Krishna Sweets',
   entityType: 'Food Retail / Sweets Shop',
   address: 'Gaddiannaram, Dilsukhnagar, Hyderabad, Telangana 500060, India',
   email: 'bluxury1000@gmail.com',
   phone: '+91 7893828468',
-  productName: 'Laddu',
+  productName: 'Special Motichoor Laddu',
   productPrice: 20,
-  venue:
-    'Laddu Shop Pickup Counter, Gaddiannaram, Dilsukhnagar, Hyderabad, Telangana 500060',
-  counterTimings: '8:00 AM – 9:00 PM (all days)',
+  productDesc: 'Made with pure desi ghee and premium quality gram flour. Freshly prepared daily and packed hygienically. Perfect for all occasions.',
+  venue: 'Sri Krishna Sweets Pickup Counter, Gaddiannaram, Dilsukhnagar, Hyderabad, Telangana 500060',
+  counterTimings: '8:00 AM – 9:00 PM (All Days)',
 };
 
 export default function App() {
@@ -26,45 +26,8 @@ export default function App() {
   const [whatsappUrl, setWhatsappUrl] = useState('');
   const [confirmedOrder, setConfirmedOrder] = useState(null);
 
-  const [timeLeft, setTimeLeft] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0,
-  });
-
-  // Next fresh batch: every day at 1:00 PM
-  const NEXT_BATCH = (() => {
-    const now = new Date();
-    const target = new Date(now);
-    target.setHours(13, 0, 0, 0);
-    if (target <= now) target.setDate(target.getDate() + 1);
-    return target;
-  })();
-
   useEffect(() => {
     axios.get(`${API_BASE}/`).catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    const tick = () => {
-      const distance = NEXT_BATCH.getTime() - new Date().getTime();
-      if (distance < 0) {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        return;
-      }
-      setTimeLeft({
-        days: Math.floor(distance / (1000 * 60 * 60 * 24)),
-        hours: Math.floor(
-          (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-        ),
-        minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
-        seconds: Math.floor((distance % (1000 * 60)) / 1000),
-      });
-    };
-    tick();
-    const interval = setInterval(tick, 1000);
-    return () => clearInterval(interval);
   }, []);
 
   const loadRazorpayScript = () =>
@@ -119,17 +82,11 @@ export default function App() {
               setWhatsappUrl(verifyRes.data.whatsappUrl);
               setConfirmedOrder(verifyRes.data.orderDetails);
             } else {
-              alert(
-                'Payment verification failed: ' +
-                  (verifyRes.data.message || 'unknown')
-              );
+              alert('Payment verification failed: ' + (verifyRes.data.message || 'unknown'));
             }
           } catch (err) {
             console.error('Verification error:', err);
-            alert(
-              'Payment verification error. Please contact support with Payment ID: ' +
-                response.razorpay_payment_id
-            );
+            alert('Payment verification error. Please contact support with Payment ID: ' + response.razorpay_payment_id);
           } finally {
             setLoading(false);
           }
@@ -175,7 +132,6 @@ export default function App() {
             whatsappUrl={whatsappUrl}
             confirmedOrder={confirmedOrder}
             handleSubmit={handleSubmit}
-            timeLeft={timeLeft}
             goTo={goTo}
           />
         ) : (
@@ -201,97 +157,79 @@ function ShopPage({
   whatsappUrl,
   confirmedOrder,
   handleSubmit,
-  timeLeft,
   goTo,
 }) {
   return (
     <div style={styles.shopContainer}>
       <div style={styles.headerSection}>
         <h1 style={styles.eventName}>🛒 {ORG.name} 🛒</h1>
-        <p style={styles.eventLocation}>
-          📍 Gaddiannaram, Dilsukhnagar, Hyderabad
-        </p>
+        <p style={styles.eventLocation}>📍 Gaddiannaram, Dilsukhnagar, Hyderabad</p>
       </div>
 
-      <div style={styles.countdownSection}>
-        <p style={styles.countdownLabel}>
-          🎯 Fresh Batch Ready In:
-        </p>
-        <div style={styles.countdownGrid}>
-          <TimeBlock num={timeLeft.days} label="Days" />
-          <TimeBlock
-            num={String(timeLeft.hours).padStart(2, '0')}
-            label="Hours"
-          />
-          <TimeBlock
-            num={String(timeLeft.minutes).padStart(2, '0')}
-            label="Min"
-          />
-          <TimeBlock
-            num={String(timeLeft.seconds).padStart(2, '0')}
-            label="Sec"
-          />
-        </div>
-      </div>
-
-      <div style={styles.glassCard}>
-        {!isPaid ? (
-          <form onSubmit={handleSubmit}>
-            <h2 style={styles.formTitle}>
-              🍬 Buy {ORG.productName} (₹{ORG.productPrice})
-            </h2>
-
-            <div style={styles.field}>
-              <label style={styles.label}>Full Name</label>
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Enter your name"
-                style={styles.input}
-              />
+      {!isPaid ? (
+        <>
+          {/* PRODUCT DISPLAY SECTION */}
+          <div style={styles.productCard}>
+            <img src={shopImg} alt={ORG.productName} style={styles.productImage} />
+            <h2 style={styles.productTitle}>{ORG.productName}</h2>
+            <p style={styles.productDesc}>{ORG.productDesc}</p>
+            <p style={styles.productPrice}>Price: ₹{ORG.productPrice}</p>
+            <div style={styles.productMeta}>
+              <span>✅ Freshly Prepared</span>
+              <span>✅ Pure Desi Ghee</span>
+              <span>✅ Counter Pickup</span>
             </div>
+          </div>
 
-            <div style={styles.field}>
-              <label style={styles.label}>Phone Number</label>
-              <input
-                type="tel"
-                required
-                pattern="[0-9]{10}"
-                maxLength="10"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
-                placeholder="10-digit mobile number"
-                style={styles.input}
-              />
-            </div>
+          {/* CHECKOUT FORM SECTION */}
+          <div style={styles.glassCard}>
+            <h3 style={styles.formTitle}>Enter Details to Place Order</h3>
+            <form onSubmit={handleSubmit}>
+              <div style={styles.field}>
+                <label style={styles.label}>Full Name</label>
+                <input
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Enter your name"
+                  style={styles.input}
+                />
+              </div>
 
-            <button type="submit" disabled={loading} style={styles.payBtn}>
-              {loading ? '⏳ Processing...' : `💰 Pay ₹${ORG.productPrice} & Place Order`}
-            </button>
+              <div style={styles.field}>
+                <label style={styles.label}>Phone Number</label>
+                <input
+                  type="tel"
+                  required
+                  pattern="[0-9]{10}"
+                  maxLength="10"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                  placeholder="10-digit mobile number"
+                  style={styles.input}
+                />
+              </div>
 
-            <p style={styles.note}>🔒 Secure payment via Razorpay</p>
-          </form>
-        ) : (
+              <button type="submit" disabled={loading} style={styles.payBtn}>
+                {loading ? '⏳ Processing...' : `💰 Pay ₹${ORG.productPrice} & Place Order`}
+              </button>
+
+              <p style={styles.note}>🔒 Secure payment via Razorpay</p>
+            </form>
+          </div>
+        </>
+      ) : (
+        /* SUCCESS RECEIPT SECTION */
+        <div style={styles.glassCard}>
           <div style={styles.successBox}>
             <div style={styles.successIcon}>✅</div>
             <h2 style={styles.successTitle}>Order Placed Successfully!</h2>
 
             <div style={styles.detailCard}>
-              <DetailRow
-                label="Customer"
-                value={confirmedOrder?.name || ''}
-              />
-              <DetailRow
-                label="Order ID"
-                value={confirmedOrder?.orderNo || ''}
-                highlight
-              />
-              <DetailRow
-                label="Phone"
-                value={confirmedOrder?.phone || ''}
-              />
+              <DetailRow label="Customer" value={confirmedOrder?.name || ''} />
+              <DetailRow label="Order ID" value={confirmedOrder?.orderNo || ''} highlight />
+              <DetailRow label="Phone" value={confirmedOrder?.phone || ''} />
               <DetailRow label="Amount Paid" value={`₹${ORG.productPrice}`} />
             </div>
 
@@ -304,23 +242,12 @@ function ShopPage({
               📲 Send Receipt on WhatsApp
             </a>
 
-            <p style={styles.blessing}>
-              🙏 Thank you for your order 🙏
-            </p>
+            <p style={styles.blessing}>🙏 Thank you for your order 🙏</p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <Footer goTo={goTo} />
-    </div>
-  );
-}
-
-function TimeBlock({ num, label }) {
-  return (
-    <div style={styles.timeBlock}>
-      <span style={styles.timeNum}>{num}</span>
-      <span style={styles.timeLabel}>{label}</span>
     </div>
   );
 }
@@ -329,9 +256,7 @@ function DetailRow({ label, value, highlight }) {
   return (
     <div style={styles.detailRow}>
       <span style={styles.detailKey}>{label}</span>
-      <span style={highlight ? styles.detailValHighlight : styles.detailVal}>
-        {value}
-      </span>
+      <span style={highlight ? styles.detailValHighlight : styles.detailVal}>{value}</span>
     </div>
   );
 }
@@ -351,9 +276,7 @@ function Footer({ goTo }) {
 
   return (
     <footer style={styles.footer}>
-      <p style={styles.footerText}>
-        🛒 {ORG.name} • Dilsukhnagar, Hyderabad 🛒
-      </p>
+      <p style={styles.footerText}>🛒 {ORG.name} • Dilsukhnagar, Hyderabad 🛒</p>
       <p style={styles.footerLinks}>
         {links.map((l, i) => (
           <React.Fragment key={l.key}>
@@ -442,9 +365,9 @@ function AboutContent() {
 
       <h2 style={styles.policyH2}>Who We Are</h2>
       <p>
-        {ORG.name} is a food retail shop selling fresh Indian sweets. Our
-        signature product is <strong>{ORG.productName}</strong>, prepared fresh
-        daily and sold at <strong>₹{ORG.productPrice} per unit</strong>.
+        {ORG.name} is a food retail shop selling fresh Indian sweets. Our signature product is{' '}
+        <strong>{ORG.productName}</strong>, prepared fresh daily and sold at{' '}
+        <strong>₹{ORG.productPrice} per unit</strong>.
       </p>
 
       <h2 style={styles.policyH2}>Our Product</h2>
@@ -516,8 +439,8 @@ function RefundContent() {
       <h1 style={styles.policyH1}>Refund &amp; Cancellation Policy</h1>
       <ul>
         <li>
-          The ₹{ORG.productPrice} purchase amount is{' '}
-          <strong>non-refundable</strong> once payment is successful.
+          The ₹{ORG.productPrice} purchase amount is <strong>non-refundable</strong> once
+          payment is successful.
         </li>
         <li>
           If a payment is deducted but the order is not generated due to a
@@ -528,9 +451,7 @@ function RefundContent() {
           Refunds, when applicable, are processed within 5–7 business days to
           the original payment method.
         </li>
-        <li>
-          For refund requests, email {ORG.email} or call {ORG.phone}.
-        </li>
+        <li>For refund requests, email {ORG.email} or call {ORG.phone}.</li>
       </ul>
     </div>
   );
@@ -549,9 +470,7 @@ function PrivacyContent() {
           This information is used solely to generate your order and send
           confirmation via WhatsApp.
         </li>
-        <li>
-          We do not sell, share, or rent your personal data to any third party.
-        </li>
+        <li>We do not sell, share, or rent your personal data to any third party.</li>
         <li>
           Payment information is processed securely by Razorpay. We do not
           store your card, UPI, or bank details.
@@ -568,16 +487,14 @@ function ShippingContent() {
     <div>
       <h1 style={styles.policyH1}>Shipping &amp; Pickup Policy</h1>
       <p>
-        This website sells a{' '}
-        <strong>physical food product ({ORG.productName})</strong>. We offer{' '}
+        This website sells a <strong>physical food product ({ORG.productName})</strong>. We offer{' '}
         <strong>local counter pickup</strong> for all physical orders. We do
         not ship products to customer addresses.
       </p>
       <ul>
         <li>
-          Upon successful payment, an{' '}
-          <strong>Order Receipt with an Order ID</strong> is generated
-          instantly and delivered to the customer via WhatsApp.
+          Upon successful payment, an <strong>Order Receipt with an Order ID</strong> is
+          generated instantly and delivered to the customer via WhatsApp.
         </li>
         <li>
           Customers can present their Order Receipt at our physical counter
@@ -658,8 +575,7 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    background:
-      'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 15%, rgba(0,0,0,0.4) 30%, rgba(74,14,14,0.85) 60%, rgba(0,0,0,0.95) 100%)',
+    background: 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 15%, rgba(0,0,0,0.4) 30%, rgba(74,14,14,0.85) 60%, rgba(0,0,0,0.95) 100%)',
     pointerEvents: 'none',
   },
   content: {
@@ -669,7 +585,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    paddingTop: '20vh',
+    paddingTop: '15vh',
   },
   shopContainer: {
     width: '100%',
@@ -679,15 +595,17 @@ const styles = {
     alignItems: 'center',
     padding: '0 16px',
   },
-  headerSection: { textAlign: 'center' },
+  headerSection: {
+    textAlign: 'center',
+    marginBottom: '20px',
+  },
   eventName: {
     margin: 0,
     fontSize: '28px',
     fontWeight: 'bold',
     color: '#FFD700',
     letterSpacing: '0.5px',
-    textShadow:
-      '0 4px 20px rgba(0,0,0,0.95), 0 0 30px rgba(212,160,23,0.6)',
+    textShadow: '0 4px 20px rgba(0,0,0,0.95), 0 0 30px rgba(212,160,23,0.6)',
   },
   eventLocation: {
     margin: '10px 0 0',
@@ -696,70 +614,71 @@ const styles = {
     letterSpacing: '0.4px',
     textShadow: '0 2px 10px rgba(0,0,0,0.95)',
   },
-  countdownSection: {
+  
+  // Product Card Styles
+  productCard: {
     width: '100%',
+    maxWidth: '460px',
+    background: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: '16px',
+    padding: '20px',
+    marginBottom: '20px',
     textAlign: 'center',
-    marginBottom: '40px',
-    marginTop: '40px',
+    boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+    border: '2px solid #d4a017',
   },
-  countdownLabel: {
-    margin: '0 0 14px',
-    fontSize: '14px',
+  productImage: {
+    width: '100%',
+    maxHeight: '200px',
+    objectFit: 'cover',
+    borderRadius: '10px',
+    marginBottom: '16px',
+  },
+  productTitle: {
+    margin: '0 0 10px',
+    fontSize: '22px',
+    color: '#b71c1c',
     fontWeight: 'bold',
-    color: '#fff8e1',
-    letterSpacing: '0.4px',
-    textShadow: '0 2px 8px rgba(0,0,0,0.85)',
   },
-  countdownGrid: {
+  productDesc: {
+    margin: '0 0 12px',
+    fontSize: '14px',
+    color: '#5d4037',
+    lineHeight: '1.5',
+  },
+  productPrice: {
+    margin: '0 0 12px',
+    fontSize: '24px',
+    color: '#e65100',
+    fontWeight: 'bold',
+  },
+  productMeta: {
     display: 'flex',
     justifyContent: 'center',
     gap: '10px',
+    fontSize: '12px',
+    color: '#2e7d32',
+    fontWeight: '600',
     flexWrap: 'wrap',
   },
-  timeBlock: {
-    background: 'rgba(183, 28, 28, 0.75)',
-    backdropFilter: 'blur(10px)',
-    WebkitBackdropFilter: 'blur(10px)',
-    border: '1.5px solid rgba(255, 215, 0, 0.55)',
-    borderRadius: '12px',
-    padding: '10px 14px',
-    minWidth: '68px',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    boxShadow: '0 6px 18px rgba(0,0,0,0.35)',
-  },
-  timeNum: {
-    fontSize: '22px',
-    fontWeight: 'bold',
-    color: '#FFD700',
-    lineHeight: 1,
-    fontVariantNumeric: 'tabular-nums',
-  },
-  timeLabel: {
-    fontSize: '10px',
-    color: '#ffe0b2',
-    textTransform: 'uppercase',
-    letterSpacing: '1.2px',
-    marginTop: '5px',
-  },
+
+  // Form Card Styles
   glassCard: {
     width: '100%',
     maxWidth: '460px',
-    background: 'rgba(139, 0, 0, 0.75)',
+    background: 'rgba(139, 0, 0, 0.85)',
     backdropFilter: 'blur(20px) saturate(180%)',
     WebkitBackdropFilter: 'blur(20px) saturate(180%)',
     border: '1.5px solid rgba(255, 255, 255, 0.35)',
     borderRadius: '20px',
     padding: '26px 24px 28px',
-    boxShadow:
-      '0 25px 70px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.3)',
+    boxShadow: '0 25px 70px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.3)',
     boxSizing: 'border-box',
     marginBottom: '20px',
   },
   formTitle: {
     margin: '0 0 20px',
-    fontSize: '20px',
+    fontSize: '18px',
     color: '#fff8e1',
     textAlign: 'center',
     fontWeight: 'bold',
@@ -807,6 +726,8 @@ const styles = {
     textAlign: 'center',
     textShadow: '0 1px 5px rgba(0,0,0,0.8)',
   },
+
+  // Success Styles
   successBox: { textAlign: 'center' },
   successIcon: { fontSize: '44px', marginBottom: '4px' },
   successTitle: {
@@ -866,6 +787,8 @@ const styles = {
     fontStyle: 'italic',
     textShadow: '0 1px 6px rgba(0,0,0,0.85)',
   },
+
+  // Footer Styles
   footer: {
     width: '100%',
     textAlign: 'center',
@@ -898,6 +821,8 @@ const styles = {
     textTransform: 'uppercase',
     color: '#ffe0b2',
   },
+
+  // Policy Styles
   policyContainer: {
     width: '100%',
     maxWidth: '800px',
