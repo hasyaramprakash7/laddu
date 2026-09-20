@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import shopImg from './src/assets/ganesh.jpeg';
+import shopImg from './assets/ganesh.jpeg';
 
 const API_BASE = 'https://ganesh-ikqb.onrender.com';
 
