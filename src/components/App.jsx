@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import shopImg from '../assets/ganesh.jpeg'; // Ensure this path is correct
+import shopImg from '../assets/laddu.png'; // Ensure this path is correct
 
 const API_BASE = 'https://ganesh-ikqb.onrender.com';
 
