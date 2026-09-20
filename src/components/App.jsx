@@ -36,8 +36,19 @@ const GOLD_GRADIENT =
 const GOLD_TEXT_GRADIENT =
   'linear-gradient(180deg, #f9f3b8 0%, #e6c85c 35%, #c9a233 60%, #f7ef8a 100%)';
 
+// ============================================================
+// ROUTE HELPERS  (browser back / forward support)
+// ============================================================
+const PAGE_KEYS = ['shop', 'about', 'terms', 'refund', 'privacy', 'shipping', 'contact'];
+
+function pageFromHash() {
+  if (typeof window === 'undefined') return 'shop';
+  const h = window.location.hash.replace('#', '').trim().toLowerCase();
+  return PAGE_KEYS.includes(h) ? h : 'shop';
+}
+
 export default function App() {
-  const [page, setPage] = useState('shop');
+  const [page, setPage] = useState(() => pageFromHash());
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
@@ -47,6 +58,22 @@ export default function App() {
 
   useEffect(() => {
     axios.get(`${API_BASE}/`).catch(() => {});
+  }, []);
+
+  // ---- keep browser history in sync with our internal pages ----
+  useEffect(() => {
+    // Make sure the very first history entry has our state + hash
+    const initial = pageFromHash();
+    window.history.replaceState({ page: initial }, '', `#${initial}`);
+
+    const onPopState = (event) => {
+      const next = (event.state && event.state.page) || pageFromHash();
+      setPage(next);
+      window.scrollTo(0, 0);
+    };
+
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
   const loadRazorpayScript = () =>
@@ -127,8 +154,17 @@ export default function App() {
     }
   };
 
+  // ---- navigation: pushes a real history entry ----
   const goTo = (p) => {
-    setPage(p);
+    const target = PAGE_KEYS.includes(p) ? p : 'shop';
+
+    if (target === page) {
+      window.scrollTo(0, 0);
+      return;
+    }
+
+    setPage(target);
+    window.history.pushState({ page: target }, '', `#${target}`);
     window.scrollTo(0, 0);
   };
 
@@ -136,7 +172,6 @@ export default function App() {
     <div style={styles.root}>
       <RoyalStyles />
 
-      {/* Background Image Wrapper */}
       <div style={styles.bgImageWrapper}>
         <img src={ganeshImg} alt="Background" style={styles.bgImage} />
         <div style={styles.bgOverlay} />
@@ -167,7 +202,7 @@ export default function App() {
 }
 
 // ============================================================
-// GLOBAL ROYAL CSS (fonts, focus states, shimmer, RESPONSIVE)
+// GLOBAL ROYAL CSS
 // ============================================================
 function RoyalStyles() {
   return (
@@ -178,7 +213,6 @@ function RoyalStyles() {
 
       html, body { margin: 0; padding: 0; overflow-x: hidden; }
 
-      /* ---- Inputs ---- */
       .royal-input::placeholder {
         color: rgba(212, 175, 55, 0.42);
         font-family: 'Cormorant Garamond', Georgia, serif;
@@ -190,7 +224,6 @@ function RoyalStyles() {
         box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.16), 0 0 22px rgba(212, 175, 55, 0.18);
       }
 
-      /* ---- Gold Button ---- */
       .royal-btn {
         background-size: 200% auto;
         transition: transform .16s ease, box-shadow .3s ease, filter .3s ease;
@@ -212,14 +245,12 @@ function RoyalStyles() {
         100% { background-position: 100% 50%; }
       }
 
-      /* ---- Links ---- */
       .royal-link { transition: color .2s ease, text-shadow .2s ease; }
       .royal-link:hover {
         color: #f9f3b8 !important;
         text-shadow: 0 0 14px rgba(212, 175, 55, 0.75);
       }
 
-      /* ---- WhatsApp button ---- */
       .royal-wa { transition: transform .16s ease, box-shadow .3s ease, filter .3s ease; }
       .royal-wa:hover {
         transform: translateY(-2px);
@@ -227,14 +258,12 @@ function RoyalStyles() {
         box-shadow: 0 14px 36px rgba(37, 211, 102, 0.55) !important;
       }
 
-      /* ---- Card entrance ---- */
       @keyframes royalRise {
         from { opacity: 0; transform: translateY(14px); }
         to   { opacity: 1; transform: translateY(0); }
       }
       .royal-card { animation: royalRise .6s cubic-bezier(.22,.9,.3,1) both; }
 
-      /* ---- Text overflow safety ---- */
       .royal-event-name,
       .royal-product-title,
       .royal-success-title,
@@ -244,9 +273,6 @@ function RoyalStyles() {
         overflow-wrap: anywhere;
       }
 
-      /* ==================================================
-         RESPONSIVE — TABLET / LARGE PHONE (≤ 640px)
-      ================================================== */
       @media (max-width: 640px) {
         .royal-content { padding-top: 10vh !important; }
 
@@ -367,9 +393,6 @@ function RoyalStyles() {
         .royal-bottom-black-section { height: 90px !important; margin-top: 10px !important; }
       }
 
-      /* ==================================================
-         RESPONSIVE — SMALL PHONE (≤ 400px)
-      ================================================== */
       @media (max-width: 400px) {
         .royal-content { padding-top: 8vh !important; }
         .royal-event-name {
@@ -403,9 +426,6 @@ function RoyalStyles() {
         .royal-footer-links { font-size: 12px !important; }
       }
 
-      /* ==================================================
-         RESPONSIVE — VERY SMALL PHONE (≤ 340px)
-      ================================================== */
       @media (max-width: 340px) {
         .royal-event-name { font-size: 17px !important; letter-spacing: 1px !important; }
         .royal-product-title { font-size: 14px !important; }
@@ -416,17 +436,11 @@ function RoyalStyles() {
         .royal-policy-h1 { font-size: 15px !important; }
       }
 
-      /* ==================================================
-         RESPONSIVE — LANDSCAPE / SHORT HEIGHT
-      ================================================== */
       @media (max-height: 520px) and (orientation: landscape) {
         .royal-content { padding-top: 4vh !important; }
         .royal-event-name { margin-top: 10px !important; }
       }
 
-      /* ==================================================
-         RESPONSIVE — LARGE SCREEN (≥ 1024px)
-      ================================================== */
       @media (min-width: 1024px) {
         .royal-content { padding-top: 16vh !important; }
         .royal-event-name { font-size: 34px !important; letter-spacing: 3px !important; }
@@ -436,9 +450,6 @@ function RoyalStyles() {
         .royal-policy-container { max-width: 860px !important; }
       }
 
-      /* ==================================================
-         RESPONSIVE — EXTRA LARGE SCREEN (≥ 1440px)
-      ================================================== */
       @media (min-width: 1440px) {
         .royal-content { padding-top: 18vh !important; }
         .royal-event-name { font-size: 38px !important; }
@@ -473,14 +484,11 @@ function ShopPage({
           <span style={styles.ornamentLine} />
         </div>
 
-        <p className="royal-event-location" style={styles.eventLocation}>
-          Gaddiannaram · Dilsukhnagar · Hyderabad
-        </p>
+       
       </div>
 
       {!isPaid ? (
         <>
-          {/* CHECKOUT FORM SECTION — ON TOP */}
           <div className="royal-card royal-glass-card" style={styles.glassCard}>
             <div className="royal-card-crest" style={styles.cardCrest}>♛</div>
             <h3 className="royal-form-title" style={styles.formTitle}>
@@ -526,7 +534,6 @@ function ShopPage({
             </form>
           </div>
 
-          {/* PRODUCT DISPLAY SECTION — BELOW */}
           <div className="royal-card royal-product-card" style={styles.productCard}>
             <div className="royal-product-image-frame" style={styles.productImageFrame}>
               <img
@@ -558,7 +565,6 @@ function ShopPage({
           </div>
         </>
       ) : (
-        /* SUCCESS RECEIPT SECTION */
         <div className="royal-card royal-glass-card" style={styles.glassCard}>
           <div style={styles.successBox}>
             <div className="royal-success-icon" style={styles.successIcon}>♛</div>
@@ -922,7 +928,7 @@ function ContactContent() {
 }
 
 // ============================================================
-// STYLES — ROYAL EDITION (base styles; responsive via media queries)
+// STYLES — ROYAL EDITION
 // ============================================================
 const styles = {
   root: {
@@ -932,9 +938,7 @@ const styles = {
     margin: 0,
     padding: 0,
     fontFamily: FONT_BODY,
-    backgroundColor: ROYAL_GREEN_DARK,
-    backgroundImage:
-      'radial-gradient(circle at 50% 0%, #0e3b2c 0%, #06231a 42%, #010a07 100%)',
+    backgroundColor: '#010a07',
     overflowX: 'hidden',
   },
   bgImageWrapper: {
@@ -948,7 +952,7 @@ const styles = {
     width: '100%',
     height: 'auto',
     display: 'block',
-    opacity: 0.9,
+    opacity: 1,
   },
   bgOverlay: {
     position: 'absolute',
@@ -957,7 +961,7 @@ const styles = {
     right: 0,
     bottom: 0,
     background:
-      'linear-gradient(180deg, rgba(1,10,7,0.15) 0%, rgba(1,10,7,0.30) 22%, rgba(4,35,26,0.80) 48%, rgba(1,10,7,0.95) 72%, #010a07 100%)',
+      'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 20%, rgba(1,10,7,0.00) 45%, rgba(1,10,7,0.45) 70%, rgba(1,10,7,0.82) 90%, #010a07 100%)',
     pointerEvents: 'none',
   },
   content: {
@@ -978,7 +982,6 @@ const styles = {
     padding: '0 16px',
   },
 
-  // ---------- HEADER ----------
   headerSection: {
     textAlign: 'center',
     marginBottom: '22px',
@@ -999,7 +1002,12 @@ const styles = {
     WebkitTextFillColor: 'transparent',
     color: GOLD,
     filter:
-      'drop-shadow(0 3px 10px rgba(0,0,0,0.95)) drop-shadow(0 0 22px rgba(212,175,55,0.35))',
+      'drop-shadow(0 1px 2px rgba(0,0,0,1)) ' +
+      'drop-shadow(0 3px 6px rgba(0,0,0,0.98)) ' +
+      'drop-shadow(0 6px 14px rgba(0,0,0,0.92)) ' +
+      'drop-shadow(0 12px 28px rgba(0,0,0,0.82)) ' +
+      'drop-shadow(0 0 22px rgba(212,175,55,0.55)) ' +
+      'drop-shadow(0 0 44px rgba(212,175,55,0.32))',
   },
   eventLocation: {
     margin: '12px 0 0',
@@ -1012,7 +1020,6 @@ const styles = {
     textShadow: '0 2px 12px rgba(0,0,0,0.95)',
   },
 
-  // ---------- ORNAMENTS ----------
   ornament: {
     display: 'flex',
     alignItems: 'center',
@@ -1053,7 +1060,6 @@ const styles = {
     textShadow: '0 0 10px rgba(212,175,55,0.85)',
   },
 
-  // ---------- FORM CARD (ROYAL) ----------
   glassCard: {
     position: 'relative',
     width: '100%',
@@ -1144,7 +1150,6 @@ const styles = {
     textShadow: '0 1px 6px rgba(0,0,0,0.85)',
   },
 
-  // ---------- PRODUCT CARD (ROYAL) ----------
   productCard: {
     width: '100%',
     maxWidth: '460px',
@@ -1218,7 +1223,6 @@ const styles = {
   },
   dot: { color: 'rgba(212,175,55,0.6)' },
 
-  // ---------- SUCCESS ----------
   successBox: { textAlign: 'center' },
   successIcon: {
     fontSize: '30px',
@@ -1238,7 +1242,6 @@ const styles = {
     textShadow: '0 2px 14px rgba(0,0,0,0.9)',
   },
 
-  // Parchment receipt
   detailCard: {
     background: 'linear-gradient(180deg, #fdf8ea 0%, #f4ead1 100%)',
     border: '1px solid rgba(212, 175, 55, 0.9)',
@@ -1307,7 +1310,6 @@ const styles = {
     textShadow: '0 1px 8px rgba(0,0,0,0.85)',
   },
 
-  // ---------- FOOTER ----------
   footer: {
     width: '100%',
     textAlign: 'center',
@@ -1353,7 +1355,6 @@ const styles = {
     color: 'rgba(212,175,55,0.55)',
   },
 
-  // ---------- POLICY (PARCHMENT / ROYAL) ----------
   policyContainer: {
     width: '100%',
     maxWidth: '800px',
