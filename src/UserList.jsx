@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import shopImg from './assets/ganesh.jpeg';
+import shopImg from './assets/ganesh.jpeg'; // Keep your background image here
 
 const API_BASE = 'https://ganesh-ikqb.onrender.com';
 
 const ORG = {
-  name: 'Gaddiannaram Utsav Samithi',
-  phone: '+91 9014212176',
-  email: 'tigullagirish@gmail.com',
+  name: 'ProNexa Projects',
+  phone: '+91 9014212176', // Update with your company phone
+  email: 'support@pronzxa.com', // Update with your company email
 };
 
 // ============================================================
@@ -28,15 +28,6 @@ const GOLD_GRADIENT =
 const GOLD_TEXT_GRADIENT =
   'linear-gradient(180deg, #f9f3b8 0%, #e6c85c 35%, #c9a233 60%, #f7ef8a 100%)';
 
-// ============================================================
-// RANDOM LUCKY TOKEN GENERATOR
-// ============================================================
-function makeToken() {
-  // 6-digit token, e.g. 482913 — no leading zero
-  const num = Math.floor(100000 + Math.random() * 900000);
-  return `#${num}`;
-}
-
 export default function UserList() {
   const [orders, setOrders] = useState([]);
   const [stats, setStats] = useState(null);
@@ -44,10 +35,6 @@ export default function UserList() {
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('ALL');
   const [search, setSearch] = useState('');
-
-  // Lucky draw state
-  const [bellOn, setBellOn] = useState(false);
-  const [tokens, setTokens] = useState({}); // { orderNo: token }
 
   const fetchData = async () => {
     setLoading(true);
@@ -76,27 +63,6 @@ export default function UserList() {
     fetchData();
   }, []);
 
-  // Generate random tokens for every SUCCESS order
-  const ringBell = useCallback(() => {
-    const successOrders = orders.filter((o) => o.status === 'SUCCESS');
-    if (successOrders.length === 0) {
-      alert('No SUCCESS orders to draw tokens for.');
-      return;
-    }
-    const fresh = {};
-    successOrders.forEach((o) => {
-      fresh[o.orderNo] = makeToken();
-    });
-    setTokens(fresh);
-    setBellOn(true);
-  }, [orders]);
-
-  // Close the lucky-draw view
-  const closeBell = () => {
-    setBellOn(false);
-    setTokens({});
-  };
-
   const filtered = orders
     .filter((o) => (filter === 'ALL' ? true : o.status === filter))
     .filter((o) => {
@@ -106,14 +72,10 @@ export default function UserList() {
         o.name?.toLowerCase().includes(q) ||
         o.phone?.includes(q) ||
         o.orderNo?.toLowerCase().includes(q) ||
-        o.paymentId?.toLowerCase().includes(q)
+        o.paymentId?.toLowerCase().includes(q) ||
+        o.projectName?.toLowerCase().includes(q)
       );
     });
-
-  // When bell view is on, show only SUCCESS orders
-  const displayed = bellOn
-    ? filtered.filter((o) => o.status === 'SUCCESS')
-    : filtered;
 
   const totalAmount = stats?.totalAmount ?? 0;
 
@@ -122,19 +84,12 @@ export default function UserList() {
   };
 
   const downloadCSV = () => {
-    const header = bellOn
-      ? 'OrderNo,Name,Phone,Status,Token,PaymentId,CreatedAt\n'
-      : 'OrderNo,Name,Phone,Status,PaymentId,RazorpayOrderId,CreatedAt\n';
-
-    const rows = displayed
-      .map((o) =>
-        bellOn
-          ? `${o.orderNo},"${o.name}",${o.phone},${o.status},${
-              tokens[o.orderNo] || ''
-            },${o.paymentId || ''},${new Date(o.createdAt).toISOString()}`
-          : `${o.orderNo},"${o.name}",${o.phone},${o.status},${
-              o.paymentId || ''
-            },${o.razorpayOrderId},${new Date(o.createdAt).toISOString()}`
+    // Added Project Name and GitHub Link columns
+    const header = 'OrderNo,Name,Phone,Project,Status,GitHub Link,PaymentId,CreatedAt\n';
+    const rows = filtered
+      .map(
+        (o) =>
+          `${o.orderNo},"${o.name}",${o.phone},"${o.projectName || 'N/A'}",${o.status},${o.githubLink || 'N/A'},${o.paymentId || ''},${new Date(o.createdAt).toISOString()}`
       )
       .join('\n');
 
@@ -142,9 +97,7 @@ export default function UserList() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = bellOn
-      ? `laddu-lucky-tokens-${Date.now()}.csv`
-      : `laddu-orders-${Date.now()}.csv`;
+    a.download = `pronzxa-sales-${Date.now()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -161,32 +114,11 @@ export default function UserList() {
       <div className="royal-admin-content" style={s.content}>
         <div style={s.header}>
           <h1 className="royal-admin-title" style={s.title}>
-            Order List
+            Sales Dashboard
           </h1>
           <p className="royal-admin-subtitle" style={s.subtitle}>
             {ORG.name} · Admin Panel
           </p>
-        </div>
-
-        {/* ====== BELL BAR — LUCKY DRAW ====== */}
-        <div className="royal-bell-bar" style={s.bellBar}>
-          <button
-            onClick={bellOn ? closeBell : ringBell}
-            className={`royal-bell-btn ${bellOn ? 'royal-bell-ringing' : ''}`}
-            style={bellOn ? s.bellActive : s.bellBtn}
-            title={bellOn ? 'Close lucky draw' : 'Reveal random tokens for SUCCESS orders'}
-          >
-            <span className="royal-bell-icon">🔔</span>
-            <span className="royal-bell-label">
-              {bellOn ? 'Close Tokens' : 'Lucky Tokens'}
-            </span>
-          </button>
-
-          {bellOn && (
-            <span className="royal-bell-note" style={s.bellNote}>
-              {Object.keys(tokens).length} SUCCESS orders · tokens are random
-            </span>
-          )}
         </div>
 
         <div className="royal-admin-topbar" style={s.topBar}>
@@ -202,7 +134,7 @@ export default function UserList() {
             className="royal-admin-btn"
             style={s.csvBtn}
           >
-            {bellOn ? 'Download Tokens CSV' : 'Download CSV'}
+            Download CSV
           </button>
           <button
             onClick={goHome}
@@ -217,7 +149,7 @@ export default function UserList() {
 
         {stats && (
           <div className="royal-admin-stats" style={s.statsGrid}>
-            <StatCard label="Total" value={stats.total} color={GOLD} />
+            <StatCard label="Total Sales" value={stats.total} color={GOLD} />
             <StatCard label="Success" value={stats.success} color="#4ade80" />
             <StatCard label="Pending" value={stats.pending} color="#fbbf24" />
             <StatCard label="Failed" value={stats.failed} color="#f87171" />
@@ -229,40 +161,33 @@ export default function UserList() {
           </div>
         )}
 
-        {/* Filters hidden when bell view is active */}
-        {!bellOn && (
-          <div className="royal-admin-filter-bar" style={s.filterBar}>
-            <div style={s.filterBtns}>
-              {['ALL', 'SUCCESS', 'PENDING', 'FAILED'].map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setFilter(f)}
-                  style={filter === f ? s.filterActive : s.filterBtn}
-                >
-                  {f}
-                </button>
-              ))}
-            </div>
-            <input
-              type="text"
-              placeholder="Search name / phone / order / payment"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="royal-admin-search"
-              style={s.searchInput}
-            />
+        <div className="royal-admin-filter-bar" style={s.filterBar}>
+          <div style={s.filterBtns}>
+            {['ALL', 'SUCCESS', 'PENDING', 'FAILED'].map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                style={filter === f ? s.filterActive : s.filterBtn}
+              >
+                {f}
+              </button>
+            ))}
           </div>
-        )}
+          <input
+            type="text"
+            placeholder="Search name / phone / project"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="royal-admin-search"
+            style={s.searchInput}
+          />
+        </div>
 
         <div className="royal-admin-table-card" style={s.tableCard}>
           {loading && orders.length === 0 ? (
             <p style={s.empty}>Loading orders…</p>
-          ) : displayed.length === 0 ? (
-            <p style={s.empty}>
-              {bellOn
-                ? 'No SUCCESS orders to draw tokens for'
-                : 'No orders found'}
-            </p>
+          ) : filtered.length === 0 ? (
+            <p style={s.empty}>No orders found</p>
           ) : (
             <div style={s.tableWrap}>
               <table className="royal-admin-table" style={s.table}>
@@ -270,21 +195,26 @@ export default function UserList() {
                   <tr>
                     <th style={s.th}>#</th>
                     <th style={s.th}>Order No</th>
-                    <th style={s.th}>Name</th>
-                    <th style={s.th}>Phone</th>
+                    <th style={s.th}>Customer</th>
+                    <th style={s.th}>Project Bought</th>
                     <th style={s.th}>Status</th>
-                    {bellOn && <th style={s.th}>Lucky Token</th>}
+                    <th style={s.th}>GitHub Link</th>
                     <th style={s.th}>Payment ID</th>
                     <th style={s.th}>Created</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {displayed.map((o, i) => (
+                  {filtered.map((o, i) => (
                     <tr key={o._id} style={s.tr}>
                       <td style={s.td}>{i + 1}</td>
                       <td style={{ ...s.td, ...s.mono }}>{o.orderNo}</td>
-                      <td style={s.td}>{o.name}</td>
-                      <td style={s.td}>{o.phone}</td>
+                      <td style={s.td}>
+                        <div>{o.name}</div>
+                        <div style={{ ...s.mono, fontSize: '11px' }}>{o.phone}</div>
+                      </td>
+                      <td style={s.td}>
+                        <span style={s.projectTag}>{o.projectName || 'N/A'}</span>
+                      </td>
                       <td
                         style={{
                           ...s.td,
@@ -299,13 +229,20 @@ export default function UserList() {
                       >
                         {o.status}
                       </td>
-                      {bellOn && (
-                        <td style={s.td}>
-                          <span className="royal-token" style={s.tokenChip}>
-                            {tokens[o.orderNo] || '—'}
-                          </span>
-                        </td>
-                      )}
+                      <td style={s.td}>
+                        {o.githubLink ? (
+                          <a
+                            href={o.githubLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={s.githubLink}
+                          >
+                            Open Repo ↗
+                          </a>
+                        ) : (
+                          '—'
+                        )}
+                      </td>
                       <td style={{ ...s.td, ...s.mono }}>
                         {o.paymentId || '—'}
                       </td>
@@ -321,7 +258,7 @@ export default function UserList() {
         </div>
 
         <p className="royal-admin-footer" style={s.footerNote}>
-          Showing {displayed.length} of {orders.length} orders · 📞{' '}
+          Showing {filtered.length} of {orders.length} orders · 📞{' '}
           {ORG.phone} · ✉️ {ORG.email}
         </p>
 
@@ -343,7 +280,7 @@ function StatCard({ label, value, color }) {
 }
 
 // ============================================================
-// GLOBAL ROYAL CSS + RESPONSIVE + BELL ANIMATION
+// GLOBAL ROYAL CSS + RESPONSIVE
 // ============================================================
 function RoyalStyles() {
   return (
@@ -375,101 +312,6 @@ function RoyalStyles() {
       }
       .royal-admin-btn:active {
         transform: translateY(1px);
-      }
-
-      /* ---- Bell button ---- */
-      .royal-bell-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        padding: 12px 26px;
-        border-radius: 999px;
-        cursor: pointer;
-        font-family: 'Cinzel', serif;
-        font-size: 13px;
-        font-weight: 700;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        background: linear-gradient(135deg, #8a6d1f 0%, #d4af37 22%, #f7ef8a 50%, #d4af37 78%, #8a6d1f 100%);
-        background-size: 200% auto;
-        color: #08281c;
-        border: 1px solid rgba(255, 245, 200, 0.65);
-        box-shadow:
-          0 12px 34px rgba(212, 175, 55, 0.35),
-          inset 0 1px 0 rgba(255,255,255,0.55);
-        transition: transform .18s ease, box-shadow .3s ease, filter .3s ease;
-        animation: royalBellShine 6s ease-in-out infinite alternate;
-      }
-      .royal-bell-btn:hover {
-        transform: translateY(-2px) scale(1.02);
-        filter: brightness(1.08) saturate(1.1);
-        box-shadow:
-          0 16px 42px rgba(212, 175, 55, 0.5),
-          inset 0 1px 0 rgba(255,255,255,0.7);
-      }
-      .royal-bell-btn:active { transform: translateY(1px) scale(1); }
-
-      .royal-bell-icon {
-        display: inline-block;
-        font-size: 18px;
-        line-height: 1;
-        transform-origin: 50% 10%;
-      }
-
-      /* Bell rings while view is active */
-      .royal-bell-ringing .royal-bell-icon {
-        animation: royalRing 1.4s ease-in-out infinite;
-      }
-
-      /* Active (bell-open) state — invert to dark green */
-      .royal-bell-btn.royal-bell-ringing {
-        background: linear-gradient(160deg, rgba(12,66,48,0.98) 0%, rgba(5,32,23,0.99) 60%, rgba(2,16,11,1) 100%);
-        color: #f7ef8a;
-        border-color: rgba(212, 175, 55, 0.85);
-        box-shadow:
-          0 12px 34px rgba(0,0,0,0.55),
-          0 0 30px rgba(212, 175, 55, 0.28),
-          inset 0 1px 0 rgba(212,175,55,0.4);
-      }
-
-      @keyframes royalBellShine {
-        0%   { background-position:   0% 50%; }
-        100% { background-position: 100% 50%; }
-      }
-
-      @keyframes royalRing {
-        0%, 100% { transform: rotate(0deg); }
-        8%       { transform: rotate(18deg); }
-        16%      { transform: rotate(-16deg); }
-        24%      { transform: rotate(12deg); }
-        32%      { transform: rotate(-10deg); }
-        40%      { transform: rotate(6deg); }
-        48%      { transform: rotate(-4deg); }
-        56%      { transform: rotate(0deg); }
-      }
-
-      /* ---- Token chip ---- */
-      .royal-token {
-        display: inline-block;
-        padding: 5px 14px;
-        border-radius: 999px;
-        font-family: 'Cinzel', serif;
-        font-size: 13px;
-        font-weight: 700;
-        letter-spacing: 1.6px;
-        background: linear-gradient(135deg, #8a6d1f 0%, #d4af37 22%, #f7ef8a 50%, #d4af37 78%, #8a6d1f 100%);
-        color: #08281c;
-        border: 1px solid rgba(255, 245, 200, 0.7);
-        box-shadow:
-          0 4px 14px rgba(212, 175, 55, 0.4),
-          inset 0 1px 0 rgba(255,255,255,0.6);
-        animation: royalTokenPop .5s cubic-bezier(.22,.9,.3,1) both;
-      }
-
-      @keyframes royalTokenPop {
-        0%   { opacity: 0; transform: scale(.6); }
-        60%  { opacity: 1; transform: scale(1.12); }
-        100% { opacity: 1; transform: scale(1); }
       }
 
       /* ==================================================
@@ -507,15 +349,6 @@ function RoyalStyles() {
         }
         .royal-admin-table-card { padding: 6px !important; }
         .royal-admin-footer { font-size: 12px !important; }
-
-        .royal-bell-btn {
-          padding: 11px 20px !important;
-          font-size: 11px !important;
-          letter-spacing: 1.4px !important;
-        }
-        .royal-bell-icon { font-size: 16px !important; }
-        .royal-bell-note { font-size: 12px !important; }
-        .royal-token { font-size: 12px !important; padding: 4px 11px !important; }
       }
 
       @media (max-width: 400px) {
@@ -525,10 +358,6 @@ function RoyalStyles() {
         .royal-admin-btn {
           font-size: 9px !important;
           padding: 8px 12px !important;
-        }
-        .royal-bell-btn {
-          padding: 10px 16px !important;
-          font-size: 10px !important;
         }
       }
 
@@ -614,27 +443,6 @@ const s = {
     textTransform: 'uppercase',
     color: '#d9c98d',
     textShadow: '0 2px 12px rgba(0,0,0,0.95)',
-  },
-
-  // ---------- BELL BAR ----------
-  bellBar: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '10px',
-    margin: '4px 0 22px',
-  },
-  bellBtn: {},
-  bellActive: {},
-  bellNote: {
-    fontFamily: FONT_BODY,
-    fontSize: '14px',
-    fontWeight: 600,
-    letterSpacing: '1.6px',
-    textTransform: 'uppercase',
-    color: '#c9b26a',
-    textShadow: '0 1px 8px rgba(0,0,0,0.9)',
   },
 
   topBar: {
@@ -791,7 +599,7 @@ const s = {
     width: '100%',
     borderCollapse: 'collapse',
     fontSize: '13px',
-    minWidth: '900px',
+    minWidth: '1050px', // Increased to fit new columns
   },
   th: {
     textAlign: 'left',
@@ -819,7 +627,25 @@ const s = {
     fontSize: '12px',
     color: '#c9b26a',
   },
-  tokenChip: {}, // styled via .royal-token class
+  projectTag: {
+    display: 'inline-block',
+    padding: '4px 10px',
+    borderRadius: '6px',
+    background: 'rgba(212,175,55,0.15)',
+    border: '1px solid rgba(212,175,55,0.4)',
+    color: GOLD_LIGHT,
+    fontSize: '12px',
+    fontWeight: 'bold',
+  },
+  githubLink: {
+    color: '#60a5fa',
+    textDecoration: 'none',
+    fontWeight: 'bold',
+    fontSize: '13px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '4px',
+  },
   empty: {
     textAlign: 'center',
     padding: '40px 20px',
